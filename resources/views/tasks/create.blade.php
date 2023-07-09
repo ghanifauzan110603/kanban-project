@@ -12,7 +12,7 @@
     </div>
 
     <div class="form-item">
-      <label>Detail:</label>
+      <label>Detail:</label> 
       <textarea class="form-text-area"></textarea>
     </div>
 
