@@ -26,7 +26,7 @@ class TaskController extends Controller
     public function edit($id)
     {
         $pageTitle = 'Edit Task';
-        $task = Task::all();
+        $task = Task::find($id);
 
         return view('tasks.edit', ['pageTitle' => $pageTitle, 'task' => $task]);
     }
@@ -58,4 +58,33 @@ class TaskController extends Controller
 
         return redirect()->route('tasks.index');
     }
+
+    public function update(Request $request, $id)
+    {
+        $task = Task::find($id);
+        $task->update([
+            'name' => $request->name,
+            'detail' => $request->detail,
+            'due_date' => $request->due_date,
+            'status'=> $request->status,
+        ]);
+
+        
+        return redirect()->route('tasks.index');
+    }
+
+    public function delete($id) {
+        $deleteTask = 'delete task';
+        $task = Task::find($id);
+
+        return view('tasks.delete', ['pageTitle' => $deleteTask, 'task' => $task]);
+    } 
+
+    public function destroy($id)
+{
+    $task = Task::find($id);
+    $task->delete();
+    
+    return redirect()->route('tasks.index');
+}
 }
