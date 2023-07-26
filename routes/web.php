@@ -16,6 +16,9 @@ Route::prefix('tasks')
         Route::post('/', 'store')->name('store');
         Route::get('create', 'create')->name('create');
         Route::put('/{id}', 'update')->name('update');
-        Route:: get('/{id}', 'delete')->name('delete');
+        Route::get('/{id}/delete', 'delete')->name('delete');
         Route::delete('/{id}', 'destroy')->name('destroy');
+        Route::get('progress', 'progress')->name('progress');
+        // Route::patch('{id}/move', 'move')->name('move');
+        // Route::patch('{id}/checklist', 'movechecklist')->name('checklist');
     });
