@@ -1,10 +1,11 @@
 <?php
 
-use App\Http\Controllers\TaskController; // Ditambahkan
+use App\Http\Controllers\TaskController;
+use App\Http\Controllers\AuthController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
-    return view ('home');
+    return view('home');
 })->name('home');
 
 Route::prefix('tasks')
@@ -22,4 +23,11 @@ Route::prefix('tasks')
         Route::patch('{id}/move', 'move')->name('move');
         Route::patch('{id}/checklist', 'movechecklist')->name('checklist');
         Route::get('{id}/updateStatusFromIndex', 'updateStatusFromIndex')->name('updateStatusFromIndex');
+    });
+
+Route::name('auth.')
+    ->controller(AuthController::class)
+    ->group(function () {
+        Route::get('signup', 'signupForm')->name('signupForm');
+        Route::post('signup', 'signup')->name('signup');
     });
