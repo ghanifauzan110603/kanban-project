@@ -32,4 +32,5 @@ Route::name('auth.')
         Route::post('signup', 'signup')->name('signup');
         Route::get('login', 'loginForm')->name('loginForm');
         Route::post('login', 'login')->name('login');
+        Route::post('logout', 'logout')->name('logout');
     });
