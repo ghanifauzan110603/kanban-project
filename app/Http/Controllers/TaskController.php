@@ -31,9 +31,9 @@ class TaskController extends Controller
         return view('tasks.edit', ['pageTitle' => $pageTitle, 'task' => $task]);
     }
     
-    public function create() {
+    public function create($status= null) {
        $pageTitle = "add task";
-       return view('tasks.create' , ['pageTitle' => $pageTitle]);
+       return view('tasks.create' , ['pageTitle' => $pageTitle , 'status' => $status]);
     }
 
     public function store(Request $request)
@@ -126,6 +126,15 @@ public function move(int $id, Request $request)
     ]);
 
     return redirect()->route('tasks.progress');
+}
+
+public function updateStatusFromIndex($id) {
+    $task= Task::find($id);
+    $task->update([
+        'status'=>Task::STATUS_COMPLETED
+    ]);
+
+    return redirect()->route('tasks.index');
 }
 
 }

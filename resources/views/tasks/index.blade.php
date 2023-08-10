@@ -22,9 +22,9 @@
     @foreach ($tasks as $index => $task)
     <div class="table-body">
         <div class="table-body-task-name">
-            <span class="material-icons @if ($task->status == 'completed') check-icon-completed @else check-icon @endif">
+            <a href="{{ route('tasks.updateStatusFromIndex', ['id' => $task->id]) }}" class="material-icons @if ($task->status == 'completed') check-icon-completed @else check-icon @endif">
                 check_circle
-            </span>
+            </a>
             {{ $task->name }}
         </div>
         <div class="table-body-detail"> {{ $task->detail }} </div>
