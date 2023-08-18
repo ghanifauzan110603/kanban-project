@@ -4,9 +4,9 @@ use App\Http\Controllers\TaskController;
 use App\Http\Controllers\AuthController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () {
-    return view('home');
-})->name('home')->middleware('auth');
+Route::get('/', [TaskController::class, 'home'])
+    ->name('home')
+    ->middleware('auth');
 
 Route::prefix('tasks')
     ->name('tasks.')
