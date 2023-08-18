@@ -265,20 +265,20 @@ body {
 .task-progress-board {
     display: flex;
     justify-content: space-around;
-  }
-  
-  .task-progress-column {
+}
+
+.task-progress-column {
     width: 22%;
-  }
-  
-  .task-progress-column-heading {
+}
+
+.task-progress-column-heading {
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding: 0px 4px;
-  }
-  
-  .task-progress-card {
+}
+
+.task-progress-card {
     background-color: rgb(199, 239, 208);
     border-radius: 12px;
     padding: 24px;
@@ -286,19 +286,19 @@ body {
     font-size: 20px;
     overflow-wrap: anywhere;
     position: relative;
-  }
-  
-  .task-progress-card-left {
+}
+
+.task-progress-card-left {
     display: flex;
     justify-content: space-between;
-  }
-  
-  .task-progress-card-right {
+}
+
+.task-progress-card-right {
     display: flex;
     justify-content: flex-end;
-  }
-  
-  .task-progress-card-top-check {
+}
+
+.task-progress-card-top-check {
     color: rgb(197, 197, 197);
     font-size: 28px;
     border: none;
@@ -306,19 +306,36 @@ body {
     outline: none;
     box-shadow: none;
     cursor: pointer;
-  }
-  
-  .task-progress-card-top-checked {
+}
+
+.task-progress-card-top-checked {
     color: rgb(85, 200, 159);
     cursor: default;
     font-size: 28px;
-  }
-  
-  .task-progress-card-top-edit {
+}
+
+.task-progress-card-top-edit {
     cursor: pointer;
     text-decoration: none;
-  }
-  
-  .task-progress-card-title {
+}
+
+.task-progress-card-title {
     font-size: 30px;
-  }
+}
+
+.task-list-header-owner-name {
+    padding: 16px;
+    width: 15%;
+}
+
+ .table-body-progress {
+    width: 15%;
+    padding: 16px;
+    border-right: 1px solid #d8d8d8;
+    /* Ditambahkan */
+}
+
+.table-body-owner-name {
+    width: 15%;
+    padding: 16px;
+}
