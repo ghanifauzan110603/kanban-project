@@ -23,7 +23,9 @@
     <form action="{{ route('tasks.move', ['id' => $task->id, 'status' => $leftStatus]) }}" method="POST">
       @method('patch')
       @csrf
+      @can('update', $task)
       <button class="material-icons">chevron_left</button>
+      @endcan
     </form>
     @endif
 
@@ -31,7 +33,9 @@
     <form action="{{ route('tasks.move', ['id' => $task->id, 'status' => $rightStatus]) }}" method="POST">
       @method('patch')
       @csrf
+      @can('update', $task )
       <button class="material-icons">chevron_right</button>
+      @endcan
     </form>
     @endif
   </div>

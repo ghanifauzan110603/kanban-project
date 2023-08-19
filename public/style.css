@@ -328,7 +328,7 @@ body {
     width: 15%;
 }
 
- .table-body-progress {
+.table-body-progress {
     width: 15%;
     padding: 16px;
     border-right: 1px solid #d8d8d8;
@@ -338,4 +338,8 @@ body {
 .table-body-owner-name {
     width: 15%;
     padding: 16px;
+}
+
+.table-body-links {
+    width: 10%;
 }
