@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 use App\Models\Task;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
 
 class TaskController extends Controller
 {
@@ -29,6 +30,8 @@ class TaskController extends Controller
         $pageTitle = 'Edit Task';
         $task = Task::find($id);
 
+        Gate::authorize('update', $task);
+
         return view('tasks.edit', ['pageTitle' => $pageTitle, 'task' => $task]);
     }
     
@@ -39,6 +42,8 @@ class TaskController extends Controller
 
     public function store(Request $request)
     {
+
+        
         
         $request->validate(
             [
@@ -64,6 +69,7 @@ class TaskController extends Controller
     public function update(Request $request, $id)
     {
         $task = Task::find($id);
+        Gate::authorize('update', $task);
         $task->update([
             'name' => $request->name,
             'detail' => $request->detail,
@@ -79,6 +85,8 @@ class TaskController extends Controller
         $deleteTask = 'delete task';
         $task = Task::find($id);
 
+        Gate::authorize('delete', $task);
+
         return view('tasks.delete', ['pageTitle' => $deleteTask, 'task' => $task]);
     } 
 
@@ -86,6 +94,8 @@ class TaskController extends Controller
     {
     $task = Task::find($id);
     $task->delete();
+
+    Gate::authorize('delete', $task);
     
     return redirect()->route('tasks.index');
     }
@@ -96,6 +106,8 @@ public function progress()
 
     $tasks = Task::all();
     $filteredTasks = $tasks->groupBy('status');
+
+    
 
     $tasks = [
         Task::STATUS_NOT_STARTED => $filteredTasks->get(
@@ -122,6 +134,8 @@ public function progress()
 public function move(int $id, Request $request)
 {
     $task = Task::findOrFail($id);
+
+    
 
     $task->update([
         'status' => $request->status,
