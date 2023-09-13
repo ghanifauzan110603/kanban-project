@@ -3,14 +3,19 @@
 namespace App\Http\Controllers;
 use App\Models\Role;
 use App\Models\Permission;
-use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate; // uncomment
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Auth;
+
+
+use App\Http\Controllers\Controller;
+use Illuminate\Http\Request;
 
 class RoleController extends Controller
 {
     public function index()
     {
+        // Gate::authorize('createNewRoles', Role::class);
         $pageTitle = 'Role Lists';
         $roles = Role::all();
 
@@ -22,6 +27,7 @@ class RoleController extends Controller
 
     public function create()
     {
+        Gate::authorize('createNewRoles', Role::class);
         $pageTitle = 'Add Role';
         $permissions = Permission::all();
         return view('roles.create', [
@@ -56,44 +62,47 @@ class RoleController extends Controller
 
     public function edit($id)
     {
+        Gate::authorize('createNewRoles', Role::class);
+
         $pageTitle = 'Edit Role';
-        $role = Role::find($id);
+        $role = role::findOrFail($id);
         $permissions = Permission::all();
 
-        // Gate::authorize('update', $role);
-
-        return view('roles.edit', ['pageTitle' => $pageTitle, 'role' => $role , 'permissions' => $permissions,]);
+        return view('roles.edit', [
+            'pageTitle' => $pageTitle,
+            'role' => $role,
+            'permissions' => $permissions,
+        ]);
     }
 
-    public function update(Request $request, $id)
+    public function update($id, Request $request)
     {
-        $role = Role::find($id);
-        // Gate::authorize('update', $role);
+        Gate::authorize('createNewRoles', Role::class);
+        $role = role::findOrFail($id);
+        $permissions = Permission::all();
         $role->update([
             'name' => $request->name,
+            $role->permissions()->sync($request->permissionIds),
+           
         ]);
-
-        $role->permissions()->sync($request->permissionIds);
-        
         return redirect()->route('roles.index');
     }
 
-    public function delete($id) {
-        $pageTitle = 'delete role';
-        $role = Role::find($id);
+    public function delete($id)
+    {
+        Gate::authorize('createNewRoles', Role::class);
+        $pageTitle = 'Delete role'; 
+         $role = role::findOrFail($id); 
+        
 
-        // Gate::authorize('delete', $role);
-
-        return view('roles.delete', ['pageTitle' => $pageTitle, 'role' => $role]);
-    } 
+         return view('roles.delete', ['pageTitle' => $pageTitle, 'role' => $role]);
+    }
 
     public function destroy($id)
     {
-    $role = Role::find($id);
-    $role->delete();
-
-    // Gate::authorize('delete', $role);
-    
-    return redirect()->route('roles.index');
+        Gate::authorize('createNewRoles', Role::class);
+        $role = role::findorFail($id);
+        $role->delete();
+        return redirect()->route('roles.index');
     }
 }

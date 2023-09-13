@@ -350,14 +350,24 @@ body {
     display: flex;
     align-items: center;
     overflow-wrap: anywhere;
-  }
-  
-  .table-body-permission {
+}
+
+.table-body-permission {
     width: 50%;
     padding: 16px;
     border-left: 1px solid #d8d8d8;
-  }
-  
-  .table-body-permission-item {
+}
+
+.table-body-permission-item {
     padding: 4px 0;
-  }
+}
+
+.table-body-user-name {
+    width: 15%;
+    padding: 16px;
+}
+
+.table-body-user-role {
+    width: 30%;
+    padding: 16px;
+}

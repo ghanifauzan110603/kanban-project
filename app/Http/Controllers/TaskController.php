@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Http\Controllers;
+
 use App\Models\Task;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -12,7 +13,6 @@ class TaskController extends Controller
 
     public function __construct()
     {
-
     }
 
     public function index()
@@ -30,21 +30,26 @@ class TaskController extends Controller
         $pageTitle = 'Edit Task';
         $task = Task::find($id);
 
-        Gate::authorize('update', $task);
+        // Gate::authorize('update', $task);
+        //Gate::authorize('update', $task); // Ditambahkan
+        if (Gate::denies('performAsTaskOwner', $task)) {
+            Gate::authorize('updateAnyTask', Task::class);
+        }
 
         return view('tasks.edit', ['pageTitle' => $pageTitle, 'task' => $task]);
     }
-    
-    public function create($status= null) {
-       $pageTitle = "add task";
-       return view('tasks.create' , ['pageTitle' => $pageTitle , 'status' => $status]);
+
+    public function create($status = null)
+    {
+        $pageTitle = "add task";
+        return view('tasks.create', ['pageTitle' => $pageTitle, 'status' => $status]);
     }
 
     public function store(Request $request)
     {
 
-        
-        
+
+
         $request->validate(
             [
                 'name' => 'required',
@@ -53,7 +58,7 @@ class TaskController extends Controller
             ],
             $request->all()
         );
-    
+
 
         Task::create([
             'name' => $request->name,
@@ -69,106 +74,120 @@ class TaskController extends Controller
     public function update(Request $request, $id)
     {
         $task = Task::find($id);
-        Gate::authorize('update', $task);
+        if (Gate::denies('performAsTaskOwner', $task)) {
+            Gate::authorize('updateAnyTask', Task::class);
+        }
+        // Gate::authorize('update', $task);
         $task->update([
             'name' => $request->name,
             'detail' => $request->detail,
             'due_date' => $request->due_date,
-            'status'=> $request->status,
+            'status' => $request->status,
         ]);
 
-        
+
         return redirect()->route('tasks.index');
     }
 
-    public function delete($id) {
+    public function delete($id)
+    {
         $deleteTask = 'delete task';
-        $task = Task::find($id);
+        $task = Task::findOrFail($id);
 
-        Gate::authorize('delete', $task);
+        if (Gate::denies('performAsTaskOwner', $task)) {
+            Gate::authorize('deleteAnyTask', Task::class);
+        }
 
         return view('tasks.delete', ['pageTitle' => $deleteTask, 'task' => $task]);
-    } 
+    }
 
     public function destroy($id)
     {
-    $task = Task::find($id);
-    $task->delete();
+        $task = Task::findOrFail($id);
+        $task->delete();
 
-    Gate::authorize('delete', $task);
-    
-    return redirect()->route('tasks.index');
+        if (Gate::denies('performAsTaskOwner', $task)) {
+            Gate::authorize('deleteAnyTask', Task::class);
+        }
+
+        return redirect()->route('tasks.index');
     }
 
-public function progress()
-{
-    $title = 'Task Progress';
+    public function progress()
+    {
+        $title = 'Task Progress';
 
-    $tasks = Task::all();
-    $filteredTasks = $tasks->groupBy('status');
+        $tasks = Task::all();
+        $filteredTasks = $tasks->groupBy('status');
 
-    
 
-    $tasks = [
-        Task::STATUS_NOT_STARTED => $filteredTasks->get(
-            Task::STATUS_NOT_STARTED, []
-        ),
-        Task::STATUS_IN_PROGRESS => $filteredTasks->get(
-            Task::STATUS_IN_PROGRESS, []
-        ),
-        Task::STATUS_IN_REVIEW => $filteredTasks->get(
-            Task::STATUS_IN_REVIEW, []
-        ),
-        Task::STATUS_COMPLETED => $filteredTasks->get(
-            Task::STATUS_COMPLETED, []
-        ),
-    ];
 
-    return view('tasks.progress', [
-        'pageTitle' => $title,
-        'tasks' => $tasks,
-    ]);
+        $tasks = [
+            Task::STATUS_NOT_STARTED => $filteredTasks->get(
+                Task::STATUS_NOT_STARTED,
+                []
+            ),
+            Task::STATUS_IN_PROGRESS => $filteredTasks->get(
+                Task::STATUS_IN_PROGRESS,
+                []
+            ),
+            Task::STATUS_IN_REVIEW => $filteredTasks->get(
+                Task::STATUS_IN_REVIEW,
+                []
+            ),
+            Task::STATUS_COMPLETED => $filteredTasks->get(
+                Task::STATUS_COMPLETED,
+                []
+            ),
+        ];
 
-}
+        return view('tasks.progress', [
+            'pageTitle' => $title,
+            'tasks' => $tasks,
+        ]);
+    }
 
-public function move(int $id, Request $request)
-{
-    $task = Task::findOrFail($id);
+    public function move(int $id, Request $request)
+    {
+        $task = Task::findOrFail($id);
 
-    
 
-    $task->update([
-        'status' => $request->status,
-    ]);
 
-    return redirect()->route('tasks.progress');
-}
+        $task->update([
+            'status' => $request->status,
+        ]);
 
-public function updateStatusFromIndex($id) {
-    $task= Task::find($id);
-    $task->update([
-        'status'=>Task::STATUS_COMPLETED
-    ]);
+        return redirect()->route('tasks.progress');
+    }
 
-    return redirect()->route('tasks.index');
-}
+    public function updateStatusFromIndex($id)
+    {
+        $task = Task::find($id);
+        if (Gate::denies('performAsTaskOwner', $task)) {
+            Gate::authorize('updateAnyTask', Task::class);
+        }
+        $task->update([
+            'status' => Task::STATUS_COMPLETED
+        ]);
 
-public function home()
-{
-    $tasks = Task::where('user_id', auth()->id())->get();
+        return redirect()->route('tasks.index');
+    }
 
-    $completed_count = $tasks
-        ->where('status', Task::STATUS_COMPLETED)
-        ->count();
+    public function home()
+    {
+        $tasks = Task::where('user_id', auth()->id())->get();
 
-    $uncompleted_count = $tasks
-        ->whereNotIn('status', Task::STATUS_COMPLETED)
-        ->count();
+        $completed_count = $tasks
+            ->where('status', Task::STATUS_COMPLETED)
+            ->count();
 
-    return view('home', [
-        'completed_count' => $completed_count,
-        'uncompleted_count' => $uncompleted_count,
-    ]);
-}
+        $uncompleted_count = $tasks
+            ->whereNotIn('status', Task::STATUS_COMPLETED)
+            ->count();
 
+        return view('home', [
+            'completed_count' => $completed_count,
+            'uncompleted_count' => $uncompleted_count,
+        ]);
+    }
 }
