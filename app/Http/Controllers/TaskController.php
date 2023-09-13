@@ -5,7 +5,9 @@ namespace App\Http\Controllers;
 use App\Models\Task;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use App\Models\TaskFile;
 
 class TaskController extends Controller
 {
@@ -31,7 +33,6 @@ class TaskController extends Controller
         $task = Task::find($id);
 
         // Gate::authorize('update', $task);
-        //Gate::authorize('update', $task); // Ditambahkan
         if (Gate::denies('performAsTaskOwner', $task)) {
             Gate::authorize('updateAnyTask', Task::class);
         }
@@ -55,12 +56,19 @@ class TaskController extends Controller
                 'name' => 'required',
                 'due_date' => 'required',
                 'status' => 'required',
+                'file' => ['max:5000', 'mimes:pdf,jpeg,png'],
+            ],
+            [
+                'file.max' => 'The file size exceed 5 mb',
+                'file.mimes' => 'Must be a file of type: pdf,jpeg,png',
             ],
             $request->all()
         );
 
 
-        Task::create([
+        DB::beginTransaction();
+        try {
+        $task = Task::create([
             'name' => $request->name,
             'detail' => $request->detail,
             'due_date' => $request->due_date,
@@ -68,7 +76,31 @@ class TaskController extends Controller
             'user_id' => Auth::user()->id,
         ]);
 
-        return redirect()->route('tasks.index');
+        $file = $request->file('file');
+        if ($file) {
+            $filename = $file->getClientOriginalName();
+            $path = $file->storePubliclyAs(
+                'tasks',
+                $file->hashName(),
+                'public'
+            );
+
+            TaskFile::create([
+                'task_id' => $task->id,
+                'filename' => $filename,
+                'path' => $path,
+            ]);
+        }
+
+        DB::commit();
+
+        return redirect()->route('tasks.index');}
+        catch (\Throwable $th) {
+            DB::rollBack();
+            return redirect()
+                ->route('tasks.create')
+                ->with('error', $th->getMessage());
+        }
     }
 
     public function update(Request $request, $id)

@@ -18,6 +18,18 @@
   <div>
     <p>Owner: <strong>{{ $task->user->name }}</strong></p>
   </div>
+  @if ($task->files)
+  <div>
+    @foreach ($task->files as $file)
+    <div class="task-progress-card-file">
+      <span class="material-icons">file_open</span>
+      <a target="_blank" href="{{ route('tasks.files.show', ['task_id' => $task->id, 'id' => $file->id]) }}">
+        {{ $file->filename }}
+      </a>
+    </div>
+    @endforeach
+  </div>
+  @endif
   <div class="@if ($leftStatus) task-progress-card-left @else task-progress-card-right @endif">
     @if ($leftStatus)
     <form action="{{ route('tasks.move', ['id' => $task->id, 'status' => $leftStatus]) }}" method="POST">
