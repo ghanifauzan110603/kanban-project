@@ -7,6 +7,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use App\Http\Resources\TaskResource;
+use Illuminate\Http\Response;
 use App\Models\TaskFile;
 
 class TaskController extends Controller
@@ -21,9 +23,14 @@ class TaskController extends Controller
     {
         $pageTitle = 'Task List'; // Ditambahkan
         $tasks = Task::all();
-        return view('tasks.index', [
-            'pageTitle' => $pageTitle, //Ditambahkan
-            'tasks' => $tasks,
+        // return view('tasks.index', [
+        //     'pageTitle' => $pageTitle, //Ditambahkan
+        //     'tasks' => $tasks,
+        // ]);
+        return response()->json([
+            'code' => 200,
+            'message' => 'Task successfully',
+            'data' => TaskResource::collection($tasks),
         ]);
     }
 
@@ -37,7 +44,9 @@ class TaskController extends Controller
             Gate::authorize('updateAnyTask', Task::class);
         }
 
-        return view('tasks.edit', ['pageTitle' => $pageTitle, 'task' => $task]);
+        return response()->json([
+            'data' => new TaskResource($task),
+        ], Response::HTTP_OK);
     }
 
     public function create($status = null)
@@ -48,58 +57,53 @@ class TaskController extends Controller
 
     public function store(Request $request)
     {
-
-
-
-        $request->validate(
-            [
-                'name' => 'required',
-                'due_date' => 'required',
-                'status' => 'required',
-                'file' => ['max:5000', 'mimes:pdf,jpeg,png'],
-            ],
-            [
-                'file.max' => 'The file size exceed 5 mb',
-                'file.mimes' => 'Must be a file of type: pdf,jpeg,png',
-            ],
-            $request->all()
-        );
-
-
-        DB::beginTransaction();
-        try {
-        $task = Task::create([
-            'name' => $request->name,
-            'detail' => $request->detail,
-            'due_date' => $request->due_date,
-            'status' => $request->status,
-            'user_id' => Auth::user()->id,
+        $request->validate([
+            'name' => 'required',
+            'due_date' => 'required',
+            'status' => 'required',
+            'file' => ['max:5000', 'mimes:pdf,jpeg,png'],
+        ], [
+            'file.max' => 'The file size exceeds 5 MB',
+            'file.mimes' => 'File type must be: pdf, jpeg, png',
         ]);
 
-        $file = $request->file('file');
-        if ($file) {
-            $filename = $file->getClientOriginalName();
-            $path = $file->storePubliclyAs(
-                'tasks',
-                $file->hashName(),
-                'public'
-            );
+        DB::beginTransaction();
 
-            TaskFile::create([
-                'task_id' => $task->id,
-                'filename' => $filename,
-                'path' => $path,
+        try {
+            $task = Task::create([
+                'name' => $request->name,
+                'detail' => $request->detail,
+                'due_date' => $request->due_date,
+                'status' => $request->status,
+                'user_id' => Auth::user()->id,
             ]);
-        }
 
-        DB::commit();
+            $file = $request->file('file');
 
-        return redirect()->route('tasks.index');}
-        catch (\Throwable $th) {
+            if ($file) {
+                $filename = $file->getClientOriginalName();
+                $path = $file->storePubliclyAs('tasks', $file->hashName(), 'public');
+
+                TaskFile::create([
+                    'task_id' => $task->id,
+                    'filename' => $filename,
+                    'path' => $path,
+                ]);
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'code' => 200,
+                'message' => 'Task created successfully',
+            ]);
+        } catch (\Throwable $th) {
             DB::rollBack();
-            return redirect()
-                ->route('tasks.create')
-                ->with('error', $th->getMessage());
+
+            return response()->json([
+                'code' => 200,
+                'message' => 'Task created unsuccessfully',
+            ]);
         }
     }
 
@@ -118,7 +122,10 @@ class TaskController extends Controller
         ]);
 
 
-        return redirect()->route('tasks.index');
+        return response()->json([
+            'code' => 200,
+            'message' => 'Task update successfully',
+        ]);
     }
 
     public function delete($id)
@@ -142,7 +149,12 @@ class TaskController extends Controller
             Gate::authorize('deleteAnyTask', Task::class);
         }
 
-        return redirect()->route('tasks.index');
+        // return redirect()->route('tasks.index');
+        return response()->json([
+
+            'message' => 'Tasks' . $task->name . 'Delete data successfully',
+
+        ]);
     }
 
     public function progress()
@@ -183,6 +195,9 @@ class TaskController extends Controller
     {
         $task = Task::findOrFail($id);
 
+        if (Gate::denies('performAsTaskOwner', $task)) {
+            Gate::authorize('updateAnyTask', Task::class);
+        }
 
 
         $task->update([
@@ -217,9 +232,14 @@ class TaskController extends Controller
             ->whereNotIn('status', Task::STATUS_COMPLETED)
             ->count();
 
-        return view('home', [
-            'completed_count' => $completed_count,
-            'uncompleted_count' => $uncompleted_count,
-        ]);
+            return response()->json([
+                'completed_count' => $completed_count,
+                 'uncompleted_count' => $uncompleted_count,
+            ], Response::HTTP_OK);
+
+        // return view('home', [
+        //     'completed_count' => $completed_count,
+        //     'uncompleted_count' => $uncompleted_count,
+        // ]);
     }
 }

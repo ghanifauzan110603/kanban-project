@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\User;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 
@@ -64,15 +65,25 @@ class AuthController extends Controller
         $credentials = $request->only('email', 'password');
 
         if (Auth::attempt($credentials)) {
-            return redirect()->route('home');
+            // return redirect()->route('home');
+            $user = $request->user();
+            $token            = $user->createToken('auth_token');
+            $user->token      = $token->plainTextToken;
+            return response()->json([
+                'message' => 'login sukses!',
+                'data'=> $user
+            ]);
         }
 
-        return redirect()
-            ->back()
-            ->withInput($request->only('email'))
-            ->withErrors([
-                'email' => 'These credentials do not match our records.',
-            ]);
+        // return redirect()
+        //     ->back()
+        //     ->withInput($request->only('email'))
+        //     ->withErrors([
+        //         'email' => 'These credentials do not match our records.',
+        //     ]);
+        return response()->json([
+            'message'=> 'belum terdaftar'
+        ],Response::HTTP_UNAUTHORIZED);
     }
 
     public function logout()
