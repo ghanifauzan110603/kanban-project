@@ -43,6 +43,11 @@ class AuthController extends Controller
             'password' => $request->password,
         ]);
 
+        // return response()->json([
+        //     'code' => 200,
+        //     'message' => 'New user has been registered',
+        //     'data' => $user,
+
         return redirect()->route('home');
     }
 
@@ -65,25 +70,25 @@ class AuthController extends Controller
         $credentials = $request->only('email', 'password');
 
         if (Auth::attempt($credentials)) {
-            // return redirect()->route('home');
-            $user = $request->user();
-            $token            = $user->createToken('auth_token');
-            $user->token      = $token->plainTextToken;
-            return response()->json([
-                'message' => 'login sukses!',
-                'data'=> $user
-            ]);
+            return redirect()->route('home');
+            // $user = $request->user();
+            // $token            = $user->createToken('auth_token');
+            // $user->token      = $token->plainTextToken;
+            // return response()->json([
+            //     'message' => 'login sukses!',
+            //     'data'=> $user
+            // ]);
         }
 
-        // return redirect()
-        //     ->back()
-        //     ->withInput($request->only('email'))
-        //     ->withErrors([
-        //         'email' => 'These credentials do not match our records.',
-        //     ]);
-        return response()->json([
-            'message'=> 'belum terdaftar'
-        ],Response::HTTP_UNAUTHORIZED);
+        return redirect()
+            ->back()
+            ->withInput($request->only('email'))
+            ->withErrors([
+                'email' => 'These credentials do not match our records.',
+            ]);
+        // return response()->json([
+        //     'message'=> 'belum terdaftar'
+        // ],Response::HTTP_UNAUTHORIZED);
     }
 
     public function logout()

@@ -43,6 +43,7 @@
     <button type="submit" class="form-button">Submit</button>
   </form>
 </div>
+
 <div class="uploaded-files">
   <h2 class="uploaded-files-title">Uploaded Files</h2>
   @if ($task->files)

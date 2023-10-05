@@ -7,8 +7,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
-use App\Http\Resources\TaskResource;
-use Illuminate\Http\Response;
+// use App\Http\Resources\TaskResource;
+// use Illuminate\Http\Response;
 use App\Models\TaskFile;
 
 class TaskController extends Controller
@@ -23,15 +23,20 @@ class TaskController extends Controller
     {
         $pageTitle = 'Task List'; // Ditambahkan
         $tasks = Task::all();
-        // return view('tasks.index', [
-        //     'pageTitle' => $pageTitle, //Ditambahkan
-        //     'tasks' => $tasks,
-        // ]);
-        return response()->json([
-            'code' => 200,
-            'message' => 'Task successfully',
-            'data' => TaskResource::collection($tasks),
+        if (Gate::allows('viewAnyTask', Task::class)) {
+            $tasks = Task::all();
+        } else {
+            $tasks = Task::where('user_id', Auth::user()->id)->get();
+        }
+        return view('tasks.index', [
+            'pageTitle' => $pageTitle, //Ditambahkan
+            'tasks' => $tasks,
         ]);
+        // return response()->json([
+        //     'code' => 200,
+        //     'message' => 'Task successfully',
+        //     'data' => TaskResource::collection($tasks),
+        // ]);
     }
 
     public function edit($id)
@@ -39,19 +44,22 @@ class TaskController extends Controller
         $pageTitle = 'Edit Task';
         $task = Task::find($id);
 
-        // Gate::authorize('update', $task);
+        // return response()->json([
+        //     'data' => new TaskResource($task),
+        // ], Response::HTTP_OK);
+
+        Gate::authorize('update', $task);
         if (Gate::denies('performAsTaskOwner', $task)) {
             Gate::authorize('updateAnyTask', Task::class);
         }
 
-        return response()->json([
-            'data' => new TaskResource($task),
-        ], Response::HTTP_OK);
+
+        return view('tasks.edit', ['pageTitle' => $pageTitle, 'task' => $task]);
     }
 
     public function create($status = null)
     {
-        $pageTitle = "add task";
+        $pageTitle = "Create Task";
         return view('tasks.create', ['pageTitle' => $pageTitle, 'status' => $status]);
     }
 
@@ -65,7 +73,10 @@ class TaskController extends Controller
         ], [
             'file.max' => 'The file size exceeds 5 MB',
             'file.mimes' => 'File type must be: pdf, jpeg, png',
-        ]);
+        ],
+
+        $request->all()
+    );
 
         DB::beginTransaction();
 
@@ -90,26 +101,32 @@ class TaskController extends Controller
                     'path' => $path,
                 ]);
             }
-
+            $pageTitle = 'Task List'; // Ditambahkan
+            $tasks = Task::all();
             DB::commit();
 
-            return response()->json([
-                'code' => 200,
-                'message' => 'Task created successfully',
-            ]);
+            // return response()->json([
+            //     'code' => 200,
+            //     'message' => 'Task created successfully',
+            // ]);
+            return redirect()->route('tasks.index');
         } catch (\Throwable $th) {
             DB::rollBack();
 
-            return response()->json([
-                'code' => 200,
-                'message' => 'Task created unsuccessfully',
-            ]);
+            // return response()->json([
+            //     'code' => 200,
+            //     'message' => 'Task created unsuccessfully',
+            // ]);
+            return redirect()
+                ->route('tasks.create')
+                ->with('error', $th->getMessage());
         }
     }
 
     public function update(Request $request, $id)
     {
         $task = Task::find($id);
+        Gate::authorize('update', $task);
         if (Gate::denies('performAsTaskOwner', $task)) {
             Gate::authorize('updateAnyTask', Task::class);
         }
@@ -122,10 +139,11 @@ class TaskController extends Controller
         ]);
 
 
-        return response()->json([
-            'code' => 200,
-            'message' => 'Task update successfully',
-        ]);
+        // return response()->json([
+        //     'code' => 200,
+        //     'message' => 'Task update successfully',
+        // ]);
+        return redirect()->route('tasks.index');
     }
 
     public function delete($id)
@@ -133,6 +151,7 @@ class TaskController extends Controller
         $deleteTask = 'delete task';
         $task = Task::findOrFail($id);
 
+        Gate::authorize('delete', $task);
         if (Gate::denies('performAsTaskOwner', $task)) {
             Gate::authorize('deleteAnyTask', Task::class);
         }
@@ -143,24 +162,30 @@ class TaskController extends Controller
     public function destroy($id)
     {
         $task = Task::findOrFail($id);
-        $task->delete();
 
+        Gate::authorize('delete', $task);
         if (Gate::denies('performAsTaskOwner', $task)) {
             Gate::authorize('deleteAnyTask', Task::class);
         }
 
-        // return redirect()->route('tasks.index');
-        return response()->json([
+        $task->delete();
+        return redirect()->route('tasks.index');
+        // return response()->json([
 
-            'message' => 'Tasks' . $task->name . 'Delete data successfully',
+        //     'message' => 'Tasks' . $task->name . 'Delete data successfully',
 
-        ]);
+        // ]);
     }
 
     public function progress()
     {
         $title = 'Task Progress';
 
+        if (Gate::allows('viewAnyTask', Task::class)) {
+            $tasks = Task::all();
+        } else {
+            $tasks = Task::where('user_id', Auth::user()->id)->get();
+        }
         $tasks = Task::all();
         $filteredTasks = $tasks->groupBy('status');
 
@@ -210,6 +235,7 @@ class TaskController extends Controller
     public function updateStatusFromIndex($id)
     {
         $task = Task::find($id);
+        Gate::authorize('update', $task);
         if (Gate::denies('performAsTaskOwner', $task)) {
             Gate::authorize('updateAnyTask', Task::class);
         }
@@ -218,6 +244,20 @@ class TaskController extends Controller
         ]);
 
         return redirect()->route('tasks.index');
+    }
+
+    public function updateStatusCardBlade($id)
+    {
+        $task = Task::find($id);
+        //Gate::authorize('update', $task); // Ditambahkan
+        if (Gate::denies('performAsTaskOwner', $task)) {
+            Gate::authorize('updateAnyTask', Task::class);
+        }
+        $task->update([
+            'status' => Task::STATUS_COMPLETED,
+        ]);
+
+        return redirect()->route('tasks.progress');
     }
 
     public function home()
@@ -232,14 +272,14 @@ class TaskController extends Controller
             ->whereNotIn('status', Task::STATUS_COMPLETED)
             ->count();
 
-            return response()->json([
-                'completed_count' => $completed_count,
-                 'uncompleted_count' => $uncompleted_count,
-            ], Response::HTTP_OK);
-
-        // return view('home', [
+        // return response()->json([
         //     'completed_count' => $completed_count,
-        //     'uncompleted_count' => $uncompleted_count,
-        // ]);
+        //      'uncompleted_count' => $uncompleted_count,
+        // ], Response::HTTP_OK);
+
+        return view('home', [
+            'completed_count' => $completed_count,
+            'uncompleted_count' => $uncompleted_count,
+        ]);
     }
 }
